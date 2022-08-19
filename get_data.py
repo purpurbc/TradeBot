@@ -6,12 +6,10 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from datetime import datetime,timedelta,timezone
-
-
+from matplotlib.widgets import Cursor
 
 def quit_chromedriver(driver):
     driver.quit()
-    
     
 def load_webpage(url_name,wait):
     
@@ -43,14 +41,12 @@ def load_webpage(url_name,wait):
     return driver
 
 def read_html(driver,xpath):
-    
-    print("Reading HTML table...")
+  
     try:
         df=pd.read_html(driver.find_element(By.XPATH, xpath).get_attribute("outerHTML"))
     except Exception as e: 
         print(e)
         return #empty return. Failure
-    print("HTML table read! List of dataframes created\n")
     
     #return the dataframe
     return df
@@ -89,33 +85,70 @@ def log_and_save_data(data_values,time_values,df,wanted_data,index):
     fh.close()
     
     #append the time to the time_values list
-    time_values.append((datetime.now(tz=timezone.utc)+timedelta(hours=2)).strftime("%H:%M"))
+    time_values.append((datetime.now(tz=timezone.utc)+timedelta(hours=2)).timestamp())
+
+
+def annot_max(x,y, ax=None):
+
+    xmax = x[np.argmax(y)]
+    ymax = max(y)
+
+    text= "{:.3f}".format(float(ymax))
+
+    if not ax:
+        ax=plt.gca()
+
+    bbox_props = dict(facecolor='none', edgecolor='#434242', boxstyle='round')
+    arrowprops=dict(arrowstyle="->",connectionstyle="arc3",color="#5f5e5d")
+    kw = dict(xycoords='data',textcoords='offset points', arrowprops=arrowprops, bbox=bbox_props, ha="right", va="top")
+
+    ax.annotate(text, xy=(xmax, ymax), xytext=(float(xmax),float(ymax)), **kw)
+
+
+def annot_min(x,y, ax=None):
+
+    xmin = x[np.argmin(y)]
+    ymin = min(y)
+
+    text= "{:.3f}".format(float(ymin))
+
+    if not ax:
+        ax=plt.gca()
+
+    bbox_props = dict(facecolor='none', edgecolor='#434242', boxstyle='round')
+    arrowprops=dict(arrowstyle="->",connectionstyle="arc3",color="#5f5e5d")
+    kw = dict(xycoords='data',textcoords='offset points', arrowprops=arrowprops, bbox=bbox_props)
+
+    ax.annotate(text, xy=(xmin, ymin), xytext=(float(xmin),float(ymin)), **kw)
+
 
 def plot_graph(data_values,time_values,crypto_name,update_rate,step_size,marker_size):
-    #style
-    plt.rc('lines', linewidth = 1, color = 'r')
-    plt.rc('axes', facecolor='#E6E6E6', edgecolor='none',axisbelow=True)
-    plt.rc('xtick', direction='out', color='gray')
-    plt.rc('ytick', direction='out', color='gray')
-    plt.rc('patch', ec='#E6E6E6', force_edgecolor=True)
-    
+
+
     #regulate the spacing between the xlabels 
     step_size = (len(time_values)/40)*5
     if step_size < 5: step_size = 5
     if len(time_values) > 80: marker_size = 0
     plt.xticks(np.arange(start=0, stop=len(time_values), step=step_size))
-    
+
     #plot,legend,pause and clear
-    plt.plot([*range(0, len(time_values), 1)], data_values, linestyle='solid', marker='p', ms=marker_size,  color='r', label=crypto_name)
+    plt.plot([(datetime.fromtimestamp(x)).strftime("%m/%d/%Y\n%H:%M:%S") for x in time_values], data_values, linestyle='solid', marker='p', ms=marker_size,  color='r', label=crypto_name)
+
+    annot_max(range(len(time_values)),data_values)
+    annot_min(range(len(time_values)),data_values)
+
     plt.legend()
     plt.pause(update_rate)
     plt.clf()
+
+    
     
     
 def get_saved_data():
     
     #open textfile for reading only. Create a new file if one doesnt exist already
-    txt_file = open("live_data", "r+")
+ 
+    txt_file = open("live_data", "r")
     
     #read the file
     file_content = txt_file.read()
