@@ -1,11 +1,10 @@
 import get_data as gd
 import matplotlib.pyplot as plt
 import itertools as it
-from datetime import datetime
 import atexit
-import subprocess
 import os 
 import time
+import ema_and_sma as es
 
 #col_list = ['unix', 'date', 'symbol', 'open', 'high', 'low', 'close', 'Volume ETH', 'Volume USD']
 #gd.get_csv_data("Bitstamp_ETHUSD_1h.csv","open",col_list,32743,True)
@@ -27,7 +26,7 @@ def print_info(*argv):
         try:
             print("\t",[name for name in globals() if globals()[name] is arg][0],": ",arg)
         except Exception as e:
-            print(e) 
+            print(e, "hello") 
 
 """kill all of the chrome processes. Active window will be closed as well"""
 def kill_chrome_processes():
@@ -46,14 +45,24 @@ def initiate_tradebot(url_name,xpath,crypto_name,column_name,wanted_data,update_
     if kill_chrome: kill_chrome_processes()
     
     #get the saved data. If no saved data is available, an empty list is created
-    data_values, time_values = gd.get_saved_data()
-    
-    
+    data_values, time_values = gd.get_saved_data("live_data_180822")
     
     step_size = 5 #the space between each x_label
-    marker_size = 4 #size of the marker when plotting
     fail_count = 0 #how many times the program has failed
     fail_limit = 5 #how many times the program is allowed to fail
+
+    #stylesheet for the graph
+    if plot:
+        plt.rc('lines', linewidth = 1, color = 'r')
+        plt.rc('axes', facecolor='#E6E6E6', edgecolor='none',axisbelow=True)
+        plt.rc('xtick', direction='inout', color='gray',labelsize=6)
+        plt.rc('ytick', direction='out', color='gray')
+        plt.rc('patch', ec='#E6E6E6', force_edgecolor=True)
+
+    #set size of figure and create axes
+    if not plt.get_fignums() and plot:
+        fig, ax = plt.subplots()
+        plt.gcf().set_size_inches(14,5)
     
     #loop until termination or fail_limit is reached
     for i in it.count(start=1):
@@ -75,37 +84,47 @@ def initiate_tradebot(url_name,xpath,crypto_name,column_name,wanted_data,update_
             #search the dataframe for the crypto_name at the column_name
             index = gd.search_in_dataframe(df,crypto_name,column_name,30)
             
-            print("Start webscraping!\n")
-            #create a new figure if one doesnt exist.    
-            
-            #style
-            plt.rc('lines', linewidth = 1, color = 'r')
-            plt.rc('axes', facecolor='#E6E6E6', edgecolor='none',axisbelow=True)
-            plt.rc('xtick', direction='inout', color='gray',labelsize=6)
-            plt.rc('ytick', direction='out', color='gray')
-            plt.rc('patch', ec='#E6E6E6', force_edgecolor=True)
-
-            
-            fig, ax = plt.subplots()
-            plt.gcf().set_size_inches(14,5)
+            print("Start webscraping!\n") 
 
             #loop until termination of the program
             for j in it.count(start=1):
                 
-                ax.set_title('tradeBot')
-                
                 #read the html to get the updated dataframe
- 
                 df = gd.read_html(driver,xpath)
 
                 #log and save all of the data, i.e. update the lists and write to file
                 gd.log_and_save_data(data_values,time_values,df,wanted_data,index)
 
+                EMA_values,indexes = es.calc_EMA(len(data_values)-1,data_values,100,1,"minutes",2)
+                EMA_x = []
+                for i in indexes: EMA_x.append(time_values[i])
+                
                 #plot a graph/update the currently plotted graph
                 if plot:
-                   gd.plot_graph(data_values,time_values,crypto_name,update_rate,step_size,marker_size) 
 
-            
+                    #set the title of the plot
+                    ax.set_title('tradeBot')
+
+                    #set xlabel spacings
+                    gd.set_plt_xticks(len(time_values),step_size)
+
+                    #update the graph
+                    gd.plot_graph(data_values,time_values,crypto_name,'r') 
+                    gd.plot_graph(EMA_values,EMA_x,"EMA",'b') 
+
+                    #show the max/min values in the main graph
+                    gd.annot_max(range(len(time_values)),data_values)
+                    gd.annot_min(range(len(time_values)),data_values)
+
+                    #legend, pause and clear
+                    plt.legend()
+                    plt.pause(update_rate)
+                    plt.clf()
+
+                else:
+                    #if we dont want to plot 
+                    time.sleep(update_rate)
+
             plt.show()
 
         #resume if not fail_limit has been reached        
@@ -118,4 +137,3 @@ def initiate_tradebot(url_name,xpath,crypto_name,column_name,wanted_data,update_
     atexit.register(gd.quit_chromedriver,driver=driver)  
 
 
-initiate_tradebot(url,xpath,crypto_name,column_name,wanted_data,update_rate,kill_chrome,plot)
