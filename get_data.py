@@ -6,7 +6,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from datetime import datetime,timedelta,timezone
-from matplotlib.widgets import Cursor
 
 def quit_chromedriver(driver):
     driver.quit()
@@ -121,34 +120,29 @@ def annot_min(x,y, ax=None):
 
     ax.annotate(text, xy=(xmin, ymin), xytext=(float(xmin),float(ymin)), **kw)
 
-
-def plot_graph(data_values,time_values,crypto_name,update_rate,step_size,marker_size):
-
-
+def set_plt_xticks(len_time_values,step_size):
     #regulate the spacing between the xlabels 
-    step_size = (len(time_values)/40)*5
+    step_size = (len_time_values/40)*5
     if step_size < 5: step_size = 5
-    if len(time_values) > 80: marker_size = 0
-    plt.xticks(np.arange(start=0, stop=len(time_values), step=step_size))
+    plt.xticks(np.arange(start=0, stop=len_time_values, step=step_size))
+
+def plot_graph(data_values,time_values,crypto_name,line_color):
+
+    marker_size = 4 #size of the marker when plotting
+
+    if len(time_values) > 80: 
+        marker_size = 0
 
     #plot,legend,pause and clear
-    plt.plot([(datetime.fromtimestamp(x)).strftime("%m/%d/%Y\n%H:%M:%S") for x in time_values], data_values, linestyle='solid', marker='p', ms=marker_size,  color='r', label=crypto_name)
-
-    annot_max(range(len(time_values)),data_values)
-    annot_min(range(len(time_values)),data_values)
-
-    plt.legend()
-    plt.pause(update_rate)
-    plt.clf()
+    plt.plot([(datetime.fromtimestamp(x)).strftime("%m/%d/%Y\n%H:%M:%S") for x in time_values], data_values, linestyle='solid', marker='p', ms=marker_size,  color=line_color, label=crypto_name)
 
     
     
-    
-def get_saved_data():
+def get_saved_data(file_name):
     
     #open textfile for reading only. Create a new file if one doesnt exist already
  
-    txt_file = open("live_data", "r")
+    txt_file = open(file_name, "r")
     
     #read the file
     file_content = txt_file.read()
@@ -157,14 +151,14 @@ def get_saved_data():
     data = [list(map(float,line.split(", "))) for line in (file_content.splitlines())]
     
     #append the values to the corresponding lists
-    price_data = [x[0] for x in data]
-    time_data = [x[1] for x in data]
+    y_data = [x[0] for x in data]
+    x_data = [x[1] for x in data]
     
     #close the file
     txt_file.close()
     
     #return the x/y-data
-    return price_data,time_data
+    return y_data, x_data
 
 
 """Reads a .csv file and plots the data with pyplot"""
@@ -190,7 +184,11 @@ def get_csv_data(filename, columnname, col_list, length, plot):
     
     #return the data-list
     return data
-    
-    
-    
+
+
+
+
+
+
+
 
