@@ -1,4 +1,5 @@
 import get_data as gd
+import stochastic as st
 import matplotlib.pyplot as plt
 import itertools as it
 import atexit
@@ -95,9 +96,13 @@ def initiate_tradebot(url_name,xpath,crypto_name,column_name,wanted_data,update_
                 #log and save all of the data, i.e. update the lists and write to file
                 gd.log_and_save_data(data_values,time_values,df,wanted_data,index)
 
-                EMA_values,indexes = es.calc_EMA(len(data_values)-1,data_values,100,1,"minutes",2)
+                EMA_values,indexes = es.calc_EMA(len(data_values)-1,data_values,10,1,"minutes",2)
                 EMA_x = []
                 for i in indexes: EMA_x.append(time_values[i])
+
+                stoch_x = []
+                stoch_values, indx = st.calc_stochastic_osc(data_values,14,1,"minutes")
+                for i in indx: stoch_x.append(time_values[i])
                 
                 #plot a graph/update the currently plotted graph
                 if plot:
@@ -109,8 +114,12 @@ def initiate_tradebot(url_name,xpath,crypto_name,column_name,wanted_data,update_
                     gd.set_plt_xticks(len(time_values),step_size)
 
                     #update the graph
+                    #plt.subplot(1,1,1)
                     gd.plot_graph(data_values,time_values,crypto_name,'r') 
                     gd.plot_graph(EMA_values,EMA_x,"EMA",'b') 
+                    #plt.subplot(2,1,2)
+                    #gd.plot_graph(stoch_values,stoch_x,"name","g")
+
 
                     #show the max/min values in the main graph
                     gd.annot_max(range(len(time_values)),data_values)
