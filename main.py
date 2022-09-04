@@ -10,6 +10,8 @@ wanted_data = 'Actual'
 update_rate = 60
 kill_chrome = True
 plot = True
+store_file_name = 'saved_data/live_data'
+saved_file_name = 'saved_data/live_data_180822'
 
-tb.initiate_tradebot(url,xpath,crypto_name,column_name,wanted_data,update_rate,kill_chrome,plot)
+tb.initiate_tradebot(store_file_name,saved_file_name,url,xpath,crypto_name,column_name,wanted_data,update_rate,kill_chrome,plot)
 

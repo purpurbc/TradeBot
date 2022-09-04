@@ -7,9 +7,11 @@ from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from datetime import datetime,timedelta,timezone
 
+"""terminate all of the active chrome processes"""
 def quit_chromedriver(driver):
     driver.quit()
-    
+
+"""load the webpage ad the spcified url and return the driver""" 
 def load_webpage(url_name,wait):
     
     #options
@@ -29,7 +31,7 @@ def load_webpage(url_name,wait):
     #create driver and load the specified webpage
     try:
         driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()),options=options)
-        driver.implicitly_wait(wait) 
+        driver.implicitly_wait(wait) #needed
         driver.get(url_name)
     except Exception as e: 
         print(e)
@@ -39,8 +41,10 @@ def load_webpage(url_name,wait):
     #return the driver if successful
     return driver
 
+"""read the html for the specified xpath"""
 def read_html(driver,xpath):
-  
+    
+    #try to read the html code at the specified xpath
     try:
         df=pd.read_html(driver.find_element(By.XPATH, xpath).get_attribute("outerHTML"))
     except Exception as e: 
@@ -50,6 +54,7 @@ def read_html(driver,xpath):
     #return the dataframe
     return df
 
+"""search a dataframe for the specified crypto_name. Hardcoded for the table used on the website"""
 def search_in_dataframe(df,crypto_name,column_name,length):
     print("Searching for ", crypto_name, " in list...")
     for i in range(length):
@@ -61,15 +66,17 @@ def search_in_dataframe(df,crypto_name,column_name,length):
             print(e)
             return
 
-def log_and_save_data(data_values,time_values,df,wanted_data,index):
+"""save dataframe to a list and append it to a file"""
+def log_and_save_data(data_values,time_values,file_name,df,wanted_data,index):
     
     #open the file for appending. Create if necessary
-    fh = open('live_data', 'a+')
+    fh = open(file_name, 'a+')
     
     #if the wanted data in the dataframe is a string (need to remove dollarsign)
     if isinstance(df[0].loc[index].loc[wanted_data], str):
         #remove dollarsign if necessary and append it to the data_values list
         data_values.append(float(df[0].loc[index].loc[wanted_data].replace('$','')))
+        print(float(df[0].loc[index].loc[wanted_data].replace('$','')))
         #write to the file, i.e. log the data in memory for future use. Also add the unix timestamp
         fh.write(df[0].loc[index].loc[wanted_data].replace('$','') + ", " + str(datetime.now(tz=timezone.utc).timestamp()) + "\n")
     
@@ -77,6 +84,7 @@ def log_and_save_data(data_values,time_values,df,wanted_data,index):
     elif isinstance(df[0].loc[index].loc[wanted_data], float):
         #append it to the data_values list
         data_values.append(df[0].loc[index].loc[wanted_data])
+        print(df[0].loc[index].loc[wanted_data])
         #write to the file, i.e. log the data in memory for future use. Also add the unix timestamp
         fh.write(str(df[0].loc[index].loc[wanted_data]) + ", " + str(datetime.now(tz=timezone.utc).timestamp()) + "\n")
     
@@ -86,46 +94,37 @@ def log_and_save_data(data_values,time_values,df,wanted_data,index):
     #append the time to the time_values list
     time_values.append((datetime.now(tz=timezone.utc)+timedelta(hours=2)).timestamp())
 
+"""annotate either max or min value of specified data_values"""
+def annot(y,x,type):
 
-def annot_max(x,y, ax=None):
+    xval = 0
+    yval = 0
 
-    xmax = x[np.argmax(y)]
-    ymax = max(y)
+    #get max/min values
+    if type == 'max':
+        xval = x[np.argmax(y)]
+        yval = max(y)
+    elif type == 'min':
+        xval = x[np.argmin(y)]
+        yval = min(y)
 
-    text= "{:.3f}".format(float(ymax))
+    #create text
+    text= "{:.3f}".format(float(yval))
 
-    if not ax:
-        ax=plt.gca()
+    ax=plt.gca()
 
-    bbox_props = dict(facecolor='none', edgecolor='#434242', boxstyle='round')
-    arrowprops=dict(arrowstyle="->",connectionstyle="arc3",color="#5f5e5d")
-    kw = dict(xycoords='data',textcoords='offset points', arrowprops=arrowprops, bbox=bbox_props, ha="right", va="top")
+    #set the text at xy-pos with a specific style
+    style = dict(size=10, color='gray')
+    ax.text(xval, yval, text, **style)
 
-    ax.annotate(text, xy=(xmax, ymax), xytext=(float(xmax),float(ymax)), **kw)
-
-
-def annot_min(x,y, ax=None):
-
-    xmin = x[np.argmin(y)]
-    ymin = min(y)
-
-    text= "{:.3f}".format(float(ymin))
-
-    if not ax:
-        ax=plt.gca()
-
-    bbox_props = dict(facecolor='none', edgecolor='#434242', boxstyle='round')
-    arrowprops=dict(arrowstyle="->",connectionstyle="arc3",color="#5f5e5d")
-    kw = dict(xycoords='data',textcoords='offset points', arrowprops=arrowprops, bbox=bbox_props)
-
-    ax.annotate(text, xy=(xmin, ymin), xytext=(float(xmin),float(ymin)), **kw)
-
+"""set the spacing for the xticks in the plot"""
 def set_plt_xticks(len_time_values,step_size):
     #regulate the spacing between the xlabels 
     step_size = (len_time_values/40)*5
     if step_size < 5: step_size = 5
     plt.xticks(np.arange(start=0, stop=len_time_values, step=step_size))
 
+"""plot the graph for the data_values"""
 def plot_graph(data_values,time_values,crypto_name,line_color):
 
     marker_size = 4 #size of the marker when plotting
@@ -135,13 +134,14 @@ def plot_graph(data_values,time_values,crypto_name,line_color):
 
     #plot,legend,pause and clear
     plt.plot([(datetime.fromtimestamp(x)).strftime("%m/%d/%Y\n%H:%M:%S") for x in time_values], data_values, linestyle='solid', marker='p', ms=marker_size,  color=line_color, label=crypto_name)
-
     
-    
+"""open the save_file and read its contents. Store it as a pair of lists and return it"""    
 def get_saved_data(file_name):
     
+    #check if we actually have a file to open
+    if not file_name: return [], []
+
     #open textfile for reading only. Create a new file if one doesnt exist already
- 
     txt_file = open(file_name, "r")
     
     #read the file
