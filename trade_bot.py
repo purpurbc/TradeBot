@@ -1,35 +1,17 @@
-import get_data as gd
+import data_management as dm
+import ema_and_sma as es
 import stochastic as st
+import variables as vb
+
 import matplotlib.pyplot as plt
 import itertools as it
 import atexit
 import os 
 import time
-import ema_and_sma as es
+
 
 #col_list = ['unix', 'date', 'symbol', 'open', 'high', 'low', 'close', 'Volume ETH', 'Volume USD']
-#gd.get_csv_data("Bitstamp_ETHUSD_1h.csv","open",col_list,32743,True)
-
-url = 'https://tradingeconomics.com/solusd:cur' 
-xpath = '//html/body/form/div[4]/div/div[2]/div/div[1]/div[1]/div/div/div[6]/table' 
-crypto_name = 'Solana'
-column_name = 'Unnamed: 0'
-wanted_data = 'Actual'
-update_rate = 60
-kill_chrome = True
-plot = True
-store_file_name = 'saved_data/live_data'
-saved_file_name = 'saved_data/live_data_180822'
-
-
-"""prints the name of the arguments passed to the function as well as its value,
-but only if the variable is in the global scope"""
-def print_info(*argv):
-    for arg in argv:
-        try:
-            print("\t",[name for name in globals() if globals()[name] is arg][0],": ",arg)
-        except Exception as e:
-            print(e) 
+#dm.get_csv_data("Bitstamp_ETHUSD_1h.csv","open",col_list,32743,True)
 
 """kill all of the chrome processes. Active window will be closed as well"""
 def kill_chrome_processes():
@@ -48,7 +30,7 @@ def initiate_tradebot(store_file_name,saved_file_name,url_name,xpath,crypto_name
     if kill_chrome: kill_chrome_processes()
     
     #get the saved data. If no saved data is available, an empty list is created
-    data_values, time_values = gd.get_saved_data(saved_file_name)
+    data_values, time_values = dm.get_saved_data(saved_file_name)
     
     step_size = 5 #the space between each x_label
     fail_count = 0 #how many times the program has failed
@@ -69,22 +51,22 @@ def initiate_tradebot(store_file_name,saved_file_name,url_name,xpath,crypto_name
     #loop until termination or fail_limit is reached
     for i in it.count(start=1):
         try:
-            print("Webscrape initiated!")
+            print("Webscrape initiated!\n\nTradeBot info:\n")
             
             #print the tradebot info
-            print_info(store_file_name,saved_file_name,url_name,xpath,crypto_name,column_name,wanted_data,update_rate,kill_chrome,plot)
+            vb.print_variables(store_file_name,saved_file_name,url_name,xpath,crypto_name,column_name,wanted_data,update_rate,kill_chrome,plot)
             
             #load the webpage and get the driver
-            driver = gd.load_webpage(url_name,10)
+            driver = dm.load_webpage(url_name,10)
 
             print("Reading HTML table...")
             #read the html and get the dataframe from the table
             #initial read to get the index below
-            df = gd.read_html(driver,xpath)
+            df = dm.read_html(driver,xpath)
             print("HTML table read! List of dataframes created\n")
 
             #search the dataframe for the crypto_name at the column_name
-            index = gd.search_in_dataframe(df,crypto_name,column_name,30)
+            index = dm.search_in_dataframe(df,crypto_name,column_name,30)
 
             print("Start webscraping!\n") 
 
@@ -92,10 +74,10 @@ def initiate_tradebot(store_file_name,saved_file_name,url_name,xpath,crypto_name
             for j in it.count(start=1):
                 
                 #read the html to get the updated dataframe
-                df = gd.read_html(driver,xpath)
+                df = dm.read_html(driver,xpath)
 
                 #log and save all of the data, i.e. update the lists and write to file
-                gd.log_and_save_data(data_values,time_values,store_file_name,df,wanted_data,index)
+                dm.log_and_save_data(data_values,time_values,store_file_name,df,wanted_data,index)
         
                 #TEST
                 #EMA values
@@ -117,15 +99,15 @@ def initiate_tradebot(store_file_name,saved_file_name,url_name,xpath,crypto_name
                     plt.suptitle('tradeBot')
 
                     #set xlabel spacings
-                    gd.set_plt_xticks(len(time_values),step_size)
+                    dm.set_plt_xticks(len(time_values),step_size)
 
                     #plot everything
-                    gd.plot_graph(data_values,time_values,crypto_name,'r')
-                    gd.plot_graph(EMA_values,EMA_x,"EMA",'b')
+                    dm.plot_graph(data_values,time_values,crypto_name,'r')
+                    dm.plot_graph(EMA_values,EMA_x,"EMA",'b')
                     
                     #annotate max and min
-                    gd.annot(data_values,range(len(time_values)),'min')
-                    gd.annot(data_values,range(len(time_values)),'max')
+                    dm.annot(data_values,range(len(time_values)),'min')
+                    dm.annot(data_values,range(len(time_values)),'max')
                         
                     #legend, pause and clear
                     plt.legend()
@@ -145,6 +127,6 @@ def initiate_tradebot(store_file_name,saved_file_name,url_name,xpath,crypto_name
             if fail_count >= fail_limit: break
           
     #close the chromedriver at exit
-    atexit.register(gd.quit_chromedriver,driver=driver)  
+    atexit.register(dm.quit_chromedriver,driver=driver)  
 
 

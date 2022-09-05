@@ -76,7 +76,10 @@ def log_and_save_data(data_values,time_values,file_name,df,wanted_data,index):
     if isinstance(df[0].loc[index].loc[wanted_data], str):
         #remove dollarsign if necessary and append it to the data_values list
         data_values.append(float(df[0].loc[index].loc[wanted_data].replace('$','')))
+        
+        #DEBUG
         print(float(df[0].loc[index].loc[wanted_data].replace('$','')))
+
         #write to the file, i.e. log the data in memory for future use. Also add the unix timestamp
         fh.write(df[0].loc[index].loc[wanted_data].replace('$','') + ", " + str(datetime.now(tz=timezone.utc).timestamp()) + "\n")
     
@@ -84,7 +87,10 @@ def log_and_save_data(data_values,time_values,file_name,df,wanted_data,index):
     elif isinstance(df[0].loc[index].loc[wanted_data], float):
         #append it to the data_values list
         data_values.append(df[0].loc[index].loc[wanted_data])
+
+        #DEBUG
         print(df[0].loc[index].loc[wanted_data])
+
         #write to the file, i.e. log the data in memory for future use. Also add the unix timestamp
         fh.write(str(df[0].loc[index].loc[wanted_data]) + ", " + str(datetime.now(tz=timezone.utc).timestamp()) + "\n")
     

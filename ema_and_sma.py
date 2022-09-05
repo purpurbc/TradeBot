@@ -1,10 +1,5 @@
 import copy
-#all of the different sizes of the 
-segment_sizes = {"minutes":1, #cant be 1 since 1-1=0
-                    "hours":60,
-                    "days":1440,
-                    "weeks":10080,
-                    "months":43200}  
+import variables as vb
 
 """calculate the current SMA from the provided current index"""
 def calc_cur_SMA(cur_index,values,num_segments,segment_multitude,segment_type):
@@ -20,12 +15,12 @@ def calc_cur_SMA(cur_index,values,num_segments,segment_multitude,segment_type):
     if cur_index < 0:
         print("Error: cur_index must be positive\n")
         return
-    if segment_type not in segment_sizes:
+    if segment_type not in vb.segment_sizes:
         print("Error: segment_type must be positive\n")
         return
     
     #calculate the segment_size 
-    segment_size = segment_multitude*segment_sizes[segment_type]
+    segment_size = segment_multitude*vb.segment_sizes[segment_type]
 
     #list for containing the segments closing value
     segment_values = []
@@ -57,7 +52,7 @@ def calc_cur_EMA(cur_index,values,num_segments,segment_multitude,segment_type,de
     if cur_index < 0:
         print("Error: cur_index must be positive\n")
         return
-    if segment_type not in segment_sizes:
+    if segment_type not in vb.segment_sizes:
         print("Error: segment_type must be positive\n")
         return
 
@@ -86,12 +81,12 @@ def calc_EMA(cur_index,values,num_segments,segment_multitude,segment_type,decay)
     if cur_index < 0:
         print("Error: cur_index must be positive\n")
         return
-    if segment_type not in segment_sizes:
+    if segment_type not in vb.segment_sizes:
         print("Error: segment_type must be positive\n")
         return
 
     #the size of each segment (1 minute, 5 minutes, 3 hours, 1 day etc.)
-    segment_size = segment_multitude*segment_sizes[segment_type]
+    segment_size = segment_multitude*vb.segment_sizes[segment_type]
 
     #lists for EMA values and each corresponding index
     EMA_values = []

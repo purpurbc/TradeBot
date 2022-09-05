@@ -1,15 +1,10 @@
+import variables as vb
 
-#all of the different sizes of the 
-segment_sizes = {"minutes":1, #cant be 1 since 1-1=0
-                    "hours":60,
-                    "days":1440,
-                    "weeks":10080,
-                    "months":43200}  
 
 """calculate the current stochastic oscillator value at the specified index"""
 def calc_cur_stochastic_osc(values,cur_index,num_segments,segment_multitude,segment_type):
 
-    segment_size = segment_multitude*segment_sizes[segment_type] #size of one segment
+    segment_size = segment_multitude*vb.segment_sizes[segment_type] #size of one segment
     c = values[cur_index] #current cost
 
     #DEBUG
@@ -34,7 +29,7 @@ def calc_cur_stochastic_osc(values,cur_index,num_segments,segment_multitude,segm
 """use the calc_cur_stochastic_value on the entire list of values"""
 def calc_stochastic_osc(values,num_segments,segment_multitude,segment_type):
 
-    segment_size = segment_multitude*segment_sizes[segment_type] #size of one segment
+    segment_size = segment_multitude*vb.segment_sizes[segment_type] #size of one segment
     stochastics = []    #empty list for stochastic oscillator values
     indexes = []        #empty list for indexes
 
