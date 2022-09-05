@@ -1,4 +1,5 @@
 import data_management as dm
+import plot_management as pm
 import ema_and_sma as es
 import stochastic as st
 import variables as vb
@@ -99,15 +100,15 @@ def initiate_tradebot(store_file_name,saved_file_name,url_name,xpath,crypto_name
                     plt.suptitle('tradeBot')
 
                     #set xlabel spacings
-                    dm.set_plt_xticks(len(time_values),step_size)
+                    pm.set_plt_xticks(len(time_values),step_size)
 
                     #plot everything
-                    dm.plot_graph(data_values,time_values,crypto_name,'r')
-                    dm.plot_graph(EMA_values,EMA_x,"EMA",'b')
+                    pm.plot_graph(data_values,time_values,crypto_name,'r')
+                    pm.plot_graph(EMA_values,EMA_x,"EMA",'b')
                     
                     #annotate max and min
-                    dm.annot(data_values,range(len(time_values)),'min')
-                    dm.annot(data_values,range(len(time_values)),'max')
+                    pm.annot(data_values,range(len(time_values)),'min')
+                    pm.annot(data_values,range(len(time_values)),'max')
                         
                     #legend, pause and clear
                     plt.legend()
